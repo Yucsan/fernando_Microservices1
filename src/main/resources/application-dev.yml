@@ -1,0 +1,41 @@
+# application-dev.yml - CREAR ESTE ARCHIVO EN src/main/resources/
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  # Configuración H2 (base de datos en memoria)
+  datasource:
+    url: jdbc:h2:mem:expenseguard_dev
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  # Habilitar consola H2 para ver los datos
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  # JPA/Hibernate configuración
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Crea las tablas automáticamente
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  
+  # Desactivar Flyway (migraciones) para desarrollo
+  flyway:
+    enabled: false
+
+# Ver los logs SQL
+logging:
+  level:
+    com.expenseguard: DEBUG
+    org.hibernate.SQL: DEBUG
+
+server:
+  port: 8080

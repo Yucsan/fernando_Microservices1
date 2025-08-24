@@ -1,0 +1,223 @@
+# ============= application.yml =============
+spring:
+  application:
+    name: expense-guard
+  
+  profiles:
+    active: dev
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+  
+  security:
+    user:
+      name: admin
+      password: admin123
+      roles: ADMIN
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.expenseguard: INFO
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+# ============= application-dev.yml =============
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/expenseguard_dev
+    username: expenseguard_user
+    password: dev_password
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    com.expenseguard: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+server:
+  port: 8080
+
+# Configuraciones personalizadas para desarrollo
+app:
+  cors:
+    allowed-origins: "http://localhost:3000,http://localhost:4200"
+  
+  notifications:
+    email:
+      enabled: false
+    push:
+      enabled: false
+  
+  features:
+    bank-integration: false
+    ai-categorization: true
+
+---
+# ============= application-prod.yml =============
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/expenseguard}
+    username: ${DATABASE_USER:expenseguard_user}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  
+  security:
+    user:
+      password: ${ADMIN_PASSWORD}
+
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+  http2:
+    enabled: true
+
+logging:
+  level:
+    com.expenseguard: WARN
+    org.springframework: WARN
+    org.hibernate: WARN
+  file:
+    name: logs/expense-guard.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      show-details: never
+
+# Configuraciones personalizadas para producción
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:https://app.expenseguard.com}
+  
+  notifications:
+    email:
+      enabled: true
+      from: ${EMAIL_FROM:noreply@expenseguard.com}
+      smtp:
+        host: ${SMTP_HOST}
+        port: ${SMTP_PORT:587}
+        username: ${SMTP_USERNAME}
+        password: ${SMTP_PASSWORD}
+    push:
+      enabled: true
+      firebase-key: ${FIREBASE_KEY}
+  
+  features:
+    bank-integration: true
+    ai-categorization: true
+  
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      expiration: 86400000 # 24 hours
+
+---
+# ============= application-test.yml =============
+spring:
+  config:
+    activate:
+      on-profile: test
+  
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  h2:
+    console:
+      enabled: true
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+  
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    com.expenseguard: DEBUG
+    org.springframework: WARN
+    org.hibernate: WARN
+
+# Configuraciones para testing
+app:
+  notifications:
+    email:
+      enabled: false
+    push:
+      enabled: false
+  
+  features:
+    bank-integration: false
+    ai-categorization: false
